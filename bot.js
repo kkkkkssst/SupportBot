@@ -92,7 +92,7 @@ const start = () => {
                 });
                 userConnections[msg.chat.id].status = 2;
             } else if (userConnections[msg.chat.id] && userConnections[msg.chat.id].status === 2) {
-                userConnection.appeal = {
+                userConnections[msg.chat.id].appeal = {
                     subject: msg.text
                 }
                 await bot.sendMessage(msg.chat.id, `Опишіть Вашу проблему🎯`, {
