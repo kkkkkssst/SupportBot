@@ -6,7 +6,9 @@ class PrivateMessageHandler extends MessageHandler {
             userConnections[msg.chat.id] = {
                 Id: msg.chat.id
             }
-            await bot.sendMessage(msg.chat.id, `Вітаю, ${msg.chat.first_name} !👋🏻`);
+            await bot.sendMessage(msg.chat.id, `Вітаю, ${msg.chat.first_name} !👋🏻`, {
+                remove_keyboard: true
+            });
 
             let authResult = await getShadowAuthData(userConnections[msg.chat.id]);
 

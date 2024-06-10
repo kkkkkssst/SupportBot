@@ -45,12 +45,14 @@ const setAuthorization = async () => {
 const start = () => {
     try {
         bot.setMyCommands(commands);
-        bot.on('text', async msg => {
+        bot.on('message', (msg) => {
             if (msg.chat.type === 'group') {
                 handler = new GroupMessageHandler();
             } else if (msg.chat.type === 'private') {
                 handler = new PrivateMessageHandler();
             }
+        });
+        bot.on('text', async msg => {
             if (handler) {
                 await handler.handleText(bot, msg, userConnections);
             }

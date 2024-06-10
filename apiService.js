@@ -39,7 +39,9 @@ async function authorization() {
 }
 async function getShadowAuthData(userConnection) {
     return new Promise((resolve, reject) => {
-
+        if (!cookies) {
+            return;
+        }
         const dataUrl = "https://crmgenesis.creatio.com/0/rest/AuthorizationService/GetContactByUserId";
 
         const requestBody = JSON.stringify({ userId: userConnection.Id });
