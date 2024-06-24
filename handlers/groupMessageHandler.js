@@ -1,3 +1,4 @@
+const path = require('path');
 const MessageHandler = require('./messageHandler');
 const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates } = require('../apiService');
 class GroupMessageHandler extends MessageHandler {
@@ -157,9 +158,8 @@ class GroupMessageHandler extends MessageHandler {
             userConnections[msg.from.id].appeal.files.push(file);
 
             let simulatedMessage = {
-                chat: {
-                    id: msg.chat.id,
-                },
+                chat: msg.chat,
+                from: msg.from,
                 text: 'ready',
             };
             if (!userConnections[msg.from.id].appeal.documentFlag) {

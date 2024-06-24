@@ -53,32 +53,22 @@ const start = () => {
             }
         });
         bot.on('text', async msg => {
-            if (handler) {
-                await handler.handleText(bot, msg, userConnections);
-            }
+            await handler.handleText(bot, msg, userConnections);
         });
         bot.on('contact', async msg => {
-            if (handler) {
-                await handler.handleContact(bot, msg, userConnections);
-            }
+            await handler.handleContact(bot, msg, userConnections);
         });
         bot.on('callback_query', async msg => {
-            if (handler) {
-                await handler.handleCallbackQuery(bot, msg, userConnections);
-            }
+            await handler.handleCallbackQuery(bot, msg, userConnections);
         });
         bot.on(`document`, async msg => {
-            if (handler) {
-                await handler.handleDocument(bot, msg, userConnections);
-            }
+            await handler.handleDocument(bot, msg, userConnections);
         });
         bot.on('photo', async msg => {
-            if (handler) {
-                await handler.handlePhoto(bot, msg, userConnections);
-            }
+            await handler.handlePhoto(bot, msg, userConnections);
         });
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 }
 

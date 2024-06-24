@@ -5,10 +5,8 @@ let cookies;
 let BPMCSRF;
 
 async function authorization() {
-
-    var loginUrl = process.env.BASE_URL + process.env.LOGIN_URL;
+    let loginUrl = process.env.BASE_URL + process.env.LOGIN_URL;
     const authRequestBody = JSON.stringify({ UserName: process.env.LOGIN, UserPassword: process.env.PASSWORD });
-
     const requestOptions = {
         method: 'POST',
         headers: {
@@ -16,7 +14,6 @@ async function authorization() {
         },
         data: authRequestBody,
     };
-
     axios.post(loginUrl, authRequestBody, requestOptions)
         .then(async (response) => {
             if (response.status === 200) {
@@ -33,49 +30,35 @@ async function authorization() {
         })
         .catch((error) => {
             console.error(error);
-            reject(error);
         });
 
 }
 async function getShadowAuthData(userConnection) {
-    return new Promise((resolve, reject) => {
-        if (!cookies) {
-            return;
-        }
-        const dataUrl = "https://crmgenesis.creatio.com/0/rest/AuthorizationService/GetContactByUserId";
-
+    try {
+        const dataUrl = `${process.env.BASE_URL + process.env.AUTHORIZATION_SERVICE_URL}/GetContactByUserId`;
         const requestBody = JSON.stringify({ userId: userConnection.Id });
-
         const requestOptions = {
             method: 'POST',
             headers: {
                 'Cookie': cookies.join('; '),
                 'BPMCSRF': BPMCSRF,
                 'Content-Type': 'application/json',
-            },
-            data: requestBody,
+            }
         };
-
-        axios.post(dataUrl, requestBody, requestOptions)
-            .then(async (response) => {
-                if (response.status === 200) {
-                    resolve(response.data);
-                } else {
-                    console.error('Error status:', response.status);
-                    reject(response.status);
-                }
-            })
-            .catch((error) => {
-                console.error(error);
-                reject(error);
-            });
-    });
+        const response = await axios.post(dataUrl, requestBody, requestOptions);
+        if (response.status === 200) {
+            return response.data;
+        } else {
+            console.error('Error status:', response.status);
+        }
+    } catch (error) {
+        console.error('Error during request:', error);
+    }
 }
 async function getUserByPhone(userConnection) {
     try {
         const requestBody = JSON.stringify({ phoneNumber: userConnection.phoneNumber });
-
-        let response = await fetch('https://crmgenesis.creatio.com/0/rest/AuthorizationService/GetContactByPhoneNumber', {
+        let response = await fetch(`${process.env.BASE_URL + process.env.AUTHORIZATION_SERVICE_URL}/GetContactByPhoneNumber`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -84,15 +67,12 @@ async function getUserByPhone(userConnection) {
             },
             body: requestBody
         });
-
         if (response.ok) {
             let result = await response.json();
             return result;
         } else {
-            console.log(response.status);
-            return;
+            console.error('Error status:', response.status);
         }
-
     } catch (error) {
         console.log(error);
     }
@@ -102,7 +82,7 @@ async function getUserByPhone(userConnection) {
 async function setContactData(userConnection) {
     try {
         const requestBody = JSON.stringify({ userId: userConnection.Id, phoneNumber: userConnection.phoneNumber });
-        let response = await fetch("https://crmgenesis.creatio.com/0/rest/BotService/SetContactData", {
+        let response = await fetch(`${process.env.BASE_URL}/0/rest/BotService/SetContactData`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -117,7 +97,7 @@ async function setContactData(userConnection) {
 }
 async function createCase(userConnection) {
     try {
-        let url = "https://crmgenesis.creatio.com/0/rest/SupportBotService/CreateCase";
+        let url = `${process.env.BASE_URL + process.env.SUPPORT_BOT_SERVICE_URL}/CreateCase`;
         let requestBody = JSON.stringify({ description: userConnection.appeal.description, subject: userConnection.appeal.subject, telegramId: userConnection.Id, files: userConnection.appeal.files, source: "SupportBot" });
         let requestOptions = {
             method: 'POST',
@@ -130,10 +110,9 @@ async function createCase(userConnection) {
         }
         let response = await axios.post(url, requestBody, requestOptions);
         userConnection.appeal = {}
-
         return response.data;
     } catch (err) {
-        console.log(err)
+        console.error(err)
     }
 }
 async function getUserCases(userConnection, status) {
@@ -156,7 +135,7 @@ async function getUserCases(userConnection, status) {
         });
         return caseCollection;
     } catch (err) {
-        console.log(err)
+        console.error(err)
     }
 }
 async function getCaseStates(userConnection) {
@@ -178,7 +157,7 @@ async function getCaseStates(userConnection) {
         });
         return statesCollection;
     } catch (err) {
-        console.log(err)
+        console.error(err)
     }
 }
 

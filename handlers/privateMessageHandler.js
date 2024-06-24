@@ -1,3 +1,4 @@
+const path = require('path');
 const MessageHandler = require('./messageHandler');
 const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates } = require('../apiService');
 class PrivateMessageHandler extends MessageHandler {
