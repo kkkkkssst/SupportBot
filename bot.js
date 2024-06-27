@@ -59,7 +59,8 @@ const start = () => {
             await handler.handleContact(bot, msg, userConnections);
         });
         bot.on('callback_query', async msg => {
-            await handler.handleCallbackQuery(bot, msg, userConnections);
+            if (handler)
+                await handler.handleCallbackQuery(bot, msg, userConnections);
         });
         bot.on(`document`, async msg => {
             await handler.handleDocument(bot, msg, userConnections);
