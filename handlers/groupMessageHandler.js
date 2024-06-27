@@ -1,6 +1,6 @@
 const path = require('path');
 const MessageHandler = require('./messageHandler');
-const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates } = require('../apiService');
+const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates, createComment } = require('../apiService');
 class GroupMessageHandler extends MessageHandler {
     static menuKeyboard = [[{ text: 'Додати новий кейс🆕', callback_data: 'AddNewCase'}], [{ text: 'Мої кейси📎', callback_data: "GetMyCases"}]];
     async handleText(bot, msg, userConnections) {
@@ -75,6 +75,12 @@ class GroupMessageHandler extends MessageHandler {
         } else if (userConnections[msg.from.id].status === 4) {
             let appealNum = await createCase(userConnections[msg.from.id]);
             await bot.sendMessage(msg.chat.id, `Звернення успішно оформлено під номером ${appealNum}!✅ `);
+        } else if (userConnections[msg.from.id].status == 6) {
+            userConnections[msg.from.id].case.message = msg.text;
+            let result = await createComment(userConnections[msg.from.id]);
+            if (result) {
+                await bot.sendMessage(msg.chat.id, `Повідомлення успішно відправлено ✅ `);
+            }
         } else {
             await bot.sendMessage(msg.chat.id, `${msg.from.first_name}, я вас не зрозумів`);
         }
@@ -122,8 +128,12 @@ class GroupMessageHandler extends MessageHandler {
             } else {
                 await bot.sendMessage(msg.message.chat.id, "Кейси зі статусом " + msg.data + " відсутні ❌");
             }
-        }
-
+        } else if (msg.data.startsWith("AddComment")) {
+            //TODO ???
+            userConnections[msg.from.id].case = JSON.parse(msg.data.replace("AddComment", ""));
+            await bot.sendMessage(msg.message.chat.id, "Введіть повідомлення✍️");
+            userConnections[msg.from.id].status = 6;
+        } 
     }
     async handleDocument(bot, msg, userConnections) {
         if (!userConnections[msg.from.id] || !userConnections[msg.from.id].status) {

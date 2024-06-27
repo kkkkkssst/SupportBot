@@ -160,6 +160,26 @@ async function getCaseStates(userConnection) {
         console.error(err)
     }
 }
+async function createComment(userConnection) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/SocialMessage`;
+        let requestBody = JSON.stringify({ EntityId: userConnection.case.caseId, EntitySchemaUId: "117d32f9-8275-4534-8411-1c66115ce9cd", Message: userConnection.case.message});
+        let requestOptions = {
+            method: 'POST',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            },
+            data: requestBody
+        }
+        let response = await axios.post(url, requestBody, requestOptions);
+        userConnection.case = {}
+        return response.status == 201;
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 module.exports = {
     authorization,
@@ -168,5 +188,6 @@ module.exports = {
     setContactData,
     createCase,
     getUserCases,
-    getCaseStates
+    getCaseStates,
+    createComment
 };
