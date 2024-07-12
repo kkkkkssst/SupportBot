@@ -1,6 +1,6 @@
 const path = require('path');
 const MessageHandler = require('./messageHandler');
-const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates, createComment } = require('../apiService');
+const { getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates, createComment } = require('../apiServices');
 class GroupMessageHandler extends MessageHandler {
     static menuKeyboard = [[{ text: 'Додати новий кейс🆕', callback_data: 'AddNewCase'}], [{ text: 'Мої кейси📎', callback_data: "GetMyCases"}]];
     async handleText(bot, msg, userConnections) {

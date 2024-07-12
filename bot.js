@@ -4,7 +4,7 @@ const Cookies = require('js-cookie');
 const TelegramBot = require('node-telegram-bot-api');
 const PrivateMessageHandler = require('./handlers/privateMessageHandler');
 const GroupMessageHandler = require('./handlers/groupMessageHandler');
-const { authorization, getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates } = require('./apiService');
+const { authorization, getShadowAuthData, getUserByPhone, setContactData, createCase, getUserCases, getCaseStates, getActiveUser, createActiveUser } = require('./apiServices');
 
 const bot = new TelegramBot(process.env.BOTKEY, {
     polling: {
@@ -20,6 +20,10 @@ const commands = [{
 {
     command: "menu",
     description: "Меню🔎"
+},
+{
+    command: "info",
+    description: "Інформація🔎"
 },
 {
     command: "cancel",
@@ -45,7 +49,7 @@ const setAuthorization = async () => {
 const start = () => {
     try {
         bot.setMyCommands(commands);
-        bot.on('message', (msg) => {
+        bot.on('message', async msg => {
             if (msg.chat.type === 'group') {
                 handler = new GroupMessageHandler();
             } else if (msg.chat.type === 'private') {
@@ -53,12 +57,64 @@ const start = () => {
             }
         });
         bot.on('text', async msg => {
+            if (!userConnections[msg.chat.id]) {
+                if (msg.chat.type === 'private') {
+                    let user = await getActiveUser(msg.chat.id);
+                    if (user) {
+                        userConnections[msg.chat.id] = {
+                            Id: Number(user.UsrTelegramId),
+                            status: user.UsrStatus
+                        }
+                    } else {
+                        createActiveUser(userConnections[msg.chat.id]);
+                    }
+                } else if (msg.chat.type === 'group' && !userConnections[msg.from.id]) {
+
+                    let user = await getActiveUser(msg.from.id);
+                    if (user) {
+                        userConnections[msg.from.id] = {
+                            Id: Number(user.UsrTelegramId),
+                            status: user.UsrStatus
+                        }
+                    } else {
+                        createActiveUser(userConnections[msg.from.id]);
+                    }
+
+                }
+            }
             await handler.handleText(bot, msg, userConnections);
         });
         bot.on('contact', async msg => {
             await handler.handleContact(bot, msg, userConnections);
         });
         bot.on('callback_query', async msg => {
+            if (msg.message.chat.type === 'group') {
+                handler = new GroupMessageHandler();
+                if (!userConnections[msg.from.id]) {
+                    let user = await getActiveUser(msg.from.id);
+                    if (user) {
+                        userConnections[msg.from.id] = {
+                            Id: Number(user.UsrTelegramId),
+                            status: user.UsrStatus
+                        }
+                    } else {
+                        createActiveUser(userConnections[msg.from.id]);
+                    }
+                }
+            } else if (msg.message.chat.type === 'private') {
+                if (!userConnections[msg.message.chat.id]) {
+                    let user = await getActiveUser(msg.message.chat.id);
+                    if (user) {
+                        userConnections[msg.message.chat.id] = {
+                            Id: Number(user.UsrTelegramId),
+                            status: user.UsrStatus
+                        }
+                    } else {
+                        createActiveUser(userConnections[msg.message.chat.id]);
+                    }
+                }
+                handler = new PrivateMessageHandler();
+            }
             if (handler)
                 await handler.handleCallbackQuery(bot, msg, userConnections);
         });
