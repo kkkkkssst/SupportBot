@@ -1,6 +1,6 @@
 const path = require('path');
 const MessageHandler = require('./messageHandler');
-const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser,createActiveUser, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
+const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser, createActiveUser, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
 class PrivateMessageHandler extends MessageHandler {
     async handleText(bot, msg, userConnections) {
         if (msg.text === "/start" || msg.text === "/start@CRM_Genesis_Support_bot") {
@@ -71,7 +71,7 @@ class PrivateMessageHandler extends MessageHandler {
             let caseStates = await getCaseStates();
             let inline_keyboard = [[{ text: "Всі кейси", callback_data: "GetAllCases" }], [{ text: "Пошук за номером", callback_data: "SearchNum" }]];
             caseStates.forEach(async (item) => {
-                inline_keyboard.push([{ text: item.Name, callback_data: "Stage" + item.Name}]);
+                inline_keyboard.push([{ text: item.Name, callback_data: "Stage" + item.Name }]);
             });
             await bot.sendMessage(msg.chat.id, "Виберіть тип кейсу ♻️", {
                 reply_markup: {
@@ -149,9 +149,9 @@ class PrivateMessageHandler extends MessageHandler {
             }
             let inline_keyboard = [];
             let caseInfo = {
-                caseId: example[0].Id 
+                caseId: example[0].Id
             }
-            inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + example[0].Id }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo)}]);
+            inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + example[0].Id }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo) }]);
             if (!this.caseStatusesIgnoreList.includes(example[0].StatusId)) {
                 inline_keyboard.push([{ text: "Закрити кейс", callback_data: "CloseCase" + example[0].Id }]);
             }
@@ -281,41 +281,39 @@ class PrivateMessageHandler extends MessageHandler {
                 return;
             }
             messages.sort((a, b) => new Date(b.CreatedOn) - new Date(a.CreatedOn));
-            let messagesLength = (messages.length > 5) ? 5 : messages.length;
-            let counter = (!userConnections[msg.message.chat.id].lastCommentCounter) ? messagesLength : userConnections[msg.message.chat.id].lastCommentCounter;
-            if (!userConnections[msg.message.chat.id].lastCommentIndex) {
-                userConnections[msg.message.chat.id].lastCommentIndex = 0;
-            }
-            if (!userConnections[msg.message.chat.id].lastCommentCounter) {
-                userConnections[msg.message.chat.id].lastCommentCounter = 5;
-            }
-            for (let i = userConnections[msg.message.chat.id].lastCommentIndex; i < counter + userConnections[msg.message.chat.id].lastCommentIndex; i++) {
+            let counter = (messages.length > 5) ? 5 : messages.length;
+            for (let i = 0; i < counter; i++) {
                 let inline_keyboard = [];
                 let contact = await getContactById(messages[i].CreatedById);
-                if (i === counter - 1 && counter >= 5) { 
-                    inline_keyboard.push([{ text: "Показати ще", callback_data: msg.data}])
+                if (i === counter - 1 && counter >= 5) {
+                    inline_keyboard.push([{ text: "Показати ще", callback_data: "ShowMoreMsg"}]);
+                    userConnections[msg.message.chat.id].counter = counter;
+                    userConnections[msg.message.chat.id].messages = messages;
                 }
                 await bot.sendMessage(msg.message.chat.id, `Відправник 👤: ${contact.Name}\n\nПовідомлення 📝:\n${messages[i].Message}`, {
                     reply_markup: JSON.stringify({
                         inline_keyboard: inline_keyboard
                     })
                 });
-                if (i === counter - 1) {
-                    break;
-                }
             }
-            /*for (let i = 0; i < counter; i++) {
+        } else if (msg.data.startsWith("ShowMoreMsg")) {
+            let messages = userConnections[msg.message.chat.id].messages;
+            let start = userConnections[msg.message.chat.id].counter;
+            let end = (messages.length > start + 5) ? start + 5 : messages.length;
+
+            for (let i = start; i < end; i++) {
                 let inline_keyboard = [];
                 let contact = await getContactById(messages[i].CreatedById);
-                if (i === counter - 1 && counter >= 5) { 
-                    inline_keyboard.push([{ text: "Показати ще", callback_data: msg.data}])
+                if (i === end - 1 && end < messages.length) {
+                    inline_keyboard.push([{ text: "Показати ще", callback_data: msg.data }]);
                 }
                 await bot.sendMessage(msg.message.chat.id, `Відправник 👤: ${contact.Name}\n\nПовідомлення 📝:\n${messages[i].Message}`, {
                     reply_markup: JSON.stringify({
                         inline_keyboard: inline_keyboard
                     })
                 });
-            }*/
+            }
+            userConnections[msg.message.chat.id].counter = end;
         } else if (msg.data.startsWith("GetAllCases")) {
             let currentContactId = await getContactIdByTelegramId(msg.message.chat.id);
             let cases = await getContactCases(currentContactId);
@@ -344,18 +342,18 @@ class PrivateMessageHandler extends MessageHandler {
             }
             for (let i = userConnections[msg.message.chat.id].lastDateIndex; i < counter + userConnections[msg.message.chat.id].lastDateIndex; i++) {
                 let inline_keyboard = [];
-                if (!cases[i]) { 
+                if (!cases[i]) {
                     continue;
                 }
                 let caseInfo = {
                     caseId: cases[i].Id
                 }
-                inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + cases[i].Id }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo)}]);
+                inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + cases[i].Id }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo) }]);
                 if (!this.caseStatusesIgnoreList.includes(cases[i].StatusId)) {
                     inline_keyboard.push([{ text: "Закрити кейс", callback_data: "CloseCase" + cases[i].Id }]);
                 }
                 if (i === counter - 1 && counter >= 5) {
-                    inline_keyboard.push([{ text: "Завантажити ще", callback_data: "GetAllCases"}]);
+                    inline_keyboard.push([{ text: "Завантажити ще", callback_data: "GetAllCases" }]);
                     userConnections[msg.message.chat.id].lastDate = cases[0].CreatedOn;
                     userConnections[msg.message.chat.id].lastDateIndex = i + 1;
                     userConnections[msg.message.chat.id].lastDateCounter += 5;
@@ -392,9 +390,9 @@ class PrivateMessageHandler extends MessageHandler {
                 return;
             }
             let caseInfo = {
-                caseId: msg.data 
+                caseId: msg.data
             }
-            inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + msg.data }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo)}]);
+            inline_keyboard.push([{ text: "Додати повідомлення", callback_data: "AddBComm" + msg.data }], [{ text: "Показати повідомлення", callback_data: "DownloadCm" + JSON.stringify(caseInfo) }]);
             if (!this.caseStatusesIgnoreList.includes(example.StatusId)) {
                 inline_keyboard.push([{ text: "Закрити кейс", callback_data: "CloseCase" + msg.data }]);
             }
@@ -454,7 +452,7 @@ class PrivateMessageHandler extends MessageHandler {
         }
 
     }
-            
+
 }
 
 module.exports = PrivateMessageHandler

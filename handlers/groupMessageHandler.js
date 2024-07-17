@@ -44,7 +44,7 @@ class GroupMessageHandler extends MessageHandler {
             return;
         } else if (userConnections[msg.from.id].status == 6) {
             userConnections[msg.from.id].case.message = msg.text;
-            userConnections[msg.from.id].case.senderId = await getContactIdByTelegramId(msg.from.id);
+            userConnections[msg.from.id].case.senderId = "9a28ec1f-5bae-46f6-871d-961adb92d5e3";//await getContactIdByTelegramId(msg.from.id);
             let result = await createComment(userConnections[msg.from.id]);
             if (result) {
                 await bot.sendMessage(msg.chat.id, `Повідомлення успішно відправлено ✅ `);
@@ -52,7 +52,7 @@ class GroupMessageHandler extends MessageHandler {
         }
     }
     async handleCallbackQuery(bot, msg, userConnections) {
-        if (!userConnections[msg.from.id] || !userConnections[msg.from.id].status) {
+        if (!userConnections[msg.from.id]) {
             return;
         } else if (msg.data.startsWith("AddComment")) {
             userConnections[msg.from.id].case = JSON.parse(msg.data.replace("AddComment", ""));
@@ -61,7 +61,7 @@ class GroupMessageHandler extends MessageHandler {
         } 
     }
     async handleDocument(bot, msg, userConnections) {
-        if (!userConnections[msg.from.id] || !userConnections[msg.from.id].status) {
+        if (!userConnections[msg.from.id]) {
             return;
         } else if (userConnections[msg.from.id].status == 3) {
             let file = {};
