@@ -23,7 +23,7 @@ const commands = [{
 },
 {
     command: "info",
-    description: "Інформація🔎"
+    description: "Інформаціяℹ️"
 },
 {
     command: "cancel",
@@ -66,7 +66,7 @@ const start = () => {
                             status: user.UsrStatus
                         }
                     } else {
-                        createActiveUser(userConnections[msg.chat.id]);
+                        //createActiveUser(userConnections[msg.chat.id]);
                     }
                 } else if (msg.chat.type === 'group' && !userConnections[msg.from.id]) {
 
@@ -77,7 +77,7 @@ const start = () => {
                             status: user.UsrStatus
                         }
                     } else {
-                        createActiveUser(userConnections[msg.from.id]);
+                        //createActiveUser(userConnections[msg.from.id]);
                     }
 
                 }
@@ -98,7 +98,7 @@ const start = () => {
                             status: user.UsrStatus
                         }
                     } else {
-                        createActiveUser(userConnections[msg.from.id]);
+                        //createActiveUser(userConnections[msg.from.id]);
                     }
                 }
             } else if (msg.message.chat.type === 'private') {
@@ -110,7 +110,7 @@ const start = () => {
                             status: user.UsrStatus
                         }
                     } else {
-                        createActiveUser(userConnections[msg.message.chat.id]);
+                        //createActiveUser(userConnections[msg.message.chat.id]);
                     }
                 }
                 handler = new PrivateMessageHandler();

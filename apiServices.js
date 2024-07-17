@@ -199,7 +199,7 @@ async function getCaseStates(userConnection) {
         }
         let response = await axios.get(url, requestOptions);
         await response.data.value.forEach(async (item) => {
-            statesCollection.push(item.Name);
+            statesCollection.push(item);
         });
         return statesCollection;
     } catch (err) {
@@ -320,9 +320,9 @@ async function createActiveUser(userConnection) {
         console.error(err);
     }
 }
-async function getMessages() {
+async function getMessagesByCaseId(caseId) {
     try {
-        let url = `${process.env.BASE_URL}/0/odata/SocialMessage`;
+        let url = `${process.env.BASE_URL}/0/odata/SocialMessage?%24filter=EntityId%20eq%20${caseId}`;
         let requestOptions = {
             method: 'GET',
             headers: {
@@ -340,7 +340,7 @@ async function getMessages() {
 async function closeCase(Id) {
     try {
         let url = `${process.env.BASE_URL}/0/odata/Case(${Id})`;
-        let requestBody = JSON.stringify({ StatusId: "6e5f4218-f46b-1410-fe9a-0050ba5d6c38" });
+        let requestBody = JSON.stringify({ StatusId: "3e7f420c-f46b-1410-fc9a-0050ba5d6c38" });
         let requestOptions = {
             method: 'PATCH',
             headers: {
@@ -356,7 +356,95 @@ async function closeCase(Id) {
         console.error(err);
     }
 }
-
+async function getCaseByNumber(number) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/Case?%24filter=contains(Number%2C%27${number}%27)`;
+        let requestOptions = {
+            method: 'GET',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            }
+        }
+        let response = await axios.get(url, requestOptions);
+        return response.data.value;
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function getContactCases(contactId) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/Case?%24filter=Contact%2FId%20eq%20${contactId}`;
+        let requestOptions = {
+            method: 'GET',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            }
+        }
+        let response = await axios.get(url, requestOptions);
+        return response.data.value;
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function setSatisfactionLevel(satisfactionLevelId, caseId) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/Case(${caseId})`;
+        let requestBody = JSON.stringify({ SatisfactionLevelId: satisfactionLevelId });
+        let requestOptions = {
+            method: 'PATCH',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            },
+            data: requestBody
+        }
+        let response = await axios.patch(url, requestBody, requestOptions);
+        return response.status == 204;
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function getSatisfactionLeveId(number) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/SatisfactionLevel`;
+        let requestOptions = {
+            method: 'GET',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            }
+        }
+        let response = await axios.get(url, requestOptions);
+        return response.data.value.filter(v => v.Point.toString() === number)[0].Id;
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function setFeedback(comment, caseId) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/Case(${caseId})`;
+        let requestBody = JSON.stringify({ SatisfactionLevelComment: comment });
+        let requestOptions = {
+            method: 'PATCH',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            },
+            data: requestBody
+        }
+        let response = await axios.patch(url, requestBody, requestOptions);
+        return response.status == 204;
+    } catch (err) {
+        console.error(err);
+    }
+}
 module.exports = {
     authorization,
     getShadowAuthData,
@@ -371,6 +459,12 @@ module.exports = {
     getContactById,
     getActiveUser,
     createActiveUser,
-    getMessages,
-    closeCase
+    getMessagesByCaseId,
+    closeCase,
+    getCaseByNumber,
+    getContactIdByTelegramId,
+    getContactCases,
+    setSatisfactionLevel,
+    getSatisfactionLeveId,
+    setFeedback
 };
