@@ -126,7 +126,7 @@ async function createCase(userConnection) {
 async function createCaseFile(caseData) {
     try {
         let url = `${process.env.BASE_URL + process.env.SUPPORT_BOT_SERVICE_URL}/SetCaseFiles`;
-        let requestBody = JSON.stringify({ caseId: caseData.Id, files: caseData.files, createdById: caseData.createdById });
+        let requestBody = JSON.stringify({ caseId: caseData.caseId, files: caseData.files, createdById: caseData.createdById });
         let requestOptions = {
             method: 'POST',
             headers: {
@@ -274,7 +274,7 @@ async function createComment(userConnection) {
             data: requestBody
         }
         let response = await axios.post(url, requestBody, requestOptions);
-        userConnection.case = {}
+        //userConnection.case = {}
         return response.status == 201;
     } catch (err) {
         console.error(err);
@@ -333,6 +333,23 @@ async function getMessagesByCaseId(caseId) {
         }
         let response = await axios.get(url, requestOptions);
         return response.data.value;
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function getEntityById(entityName, Id) {
+    try {
+        let url = `${process.env.BASE_URL}/0/odata/${entityName}(${Id})`;
+        let requestOptions = {
+            method: 'GET',
+            headers: {
+                'Cookie': cookies.join('; '),
+                'BPMCSRF': BPMCSRF,
+                'Content-Type': 'application/json',
+            }
+        }
+        let response = await axios.get(url, requestOptions);
+        return response.data;
     } catch (err) {
         console.error(err);
     }
@@ -466,5 +483,7 @@ module.exports = {
     getContactCases,
     setSatisfactionLevel,
     getSatisfactionLeveId,
-    setFeedback
+    setFeedback,
+    createCaseFile,
+    getEntityById
 };

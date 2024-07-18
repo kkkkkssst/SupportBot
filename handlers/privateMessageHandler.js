@@ -1,6 +1,6 @@
 const path = require('path');
 const MessageHandler = require('./messageHandler');
-const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser, createActiveUser, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
+const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser, getEntityById,createActiveUser, createCaseFile, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
 class PrivateMessageHandler extends MessageHandler {
     async handleText(bot, msg, userConnections) {
         if (msg.text === "/start" || msg.text === "/start@CRM_Genesis_Support_bot") {
@@ -38,6 +38,9 @@ class PrivateMessageHandler extends MessageHandler {
                 });
                 userConnections[msg.chat.id].status = 1;
             }
+        } else if (msg.text === "/info") {
+            const content = `⚙️ Технічна підтримка компанії CRM Genesis\n\n🤝 Допомога нашим клієнтам у вирішенні технічних проблем з CRM Creatio\n\n🧩 Як користуватись ботом:\n[документація](https://docs.google.com/document/d/1oMjeSqfJJzOmZN5uIfP0XSJ61sqWQ8kN/edit)\n\n📲 Контакти:\nЕлектронна пошта: crmgenesiscom@gmail.com\nТелефон: 0442000422\nСайт: https://crmgenesis.com/\n\n📆Графік роботи:\nПонеділок - П'ятниця: 09:00 - 18:00\nСубота - Неділя: Вихідні\n\n📁Політика конфіденційності:\nМи піклуємось про вашу приватність. Всі дані зберігаються та оборобляються згідно з нашою політикою конфіденційності.`;
+            await bot.sendMessage(msg.chat.id, content, { parse_mode: 'Markdown' });
         } else if (!userConnections[msg.chat.id]) {
             return;
         } else if (msg.text === "/menu" || msg.text === 'Повернутись до меню ⬅️' || msg.text === "/menu@CRM_Genesis_Support_bot" && userConnections[msg.chat.id] && userConnections[msg.chat.id].status > 0) {
@@ -155,7 +158,8 @@ class PrivateMessageHandler extends MessageHandler {
             if (!this.caseStatusesIgnoreList.includes(example[0].StatusId)) {
                 inline_keyboard.push([{ text: "Закрити кейс", callback_data: "CloseCase" + example[0].Id }]);
             }
-            await bot.sendMessage(msg.chat.id, "📁 Кейс - " + example[0].Number + `\n\nНазва: ${example[0].Subject}\n\nПроблема: ${example[0].Symptoms}`, {
+            let status = await getEntityById("CaseStatus", example[0].StatusId);
+            await bot.sendMessage(msg.chat.id, "📁 Кейс - " + example[0].Number + `\n\nНазва: ${example[0].Subject}\n\nПроблема: ${example[0].Symptoms}\n\nСтатус: ${status.Name}`, {
                 reply_markup: JSON.stringify({
                     inline_keyboard: inline_keyboard
                 })
@@ -198,7 +202,7 @@ class PrivateMessageHandler extends MessageHandler {
         }
     }
     async handleCallbackQuery(bot, msg, userConnections) {
-        if (!userConnections[msg.message.chat.id] || !userConnections[msg.message.chat.id].status) {
+        if (!userConnections[msg.message.chat.id] /*|| !userConnections[msg.message.chat.id].status*/) {
             return;
         }
         if (userConnections[msg.message.chat.id].status == 3 && msg.data == "AcceptAddingDocument") {
@@ -239,7 +243,7 @@ class PrivateMessageHandler extends MessageHandler {
             });
             userConnections[msg.message.chat.id].status = 9;
         } else if (msg.data.startsWith("AddBComm")) {
-            userConnections[msg.from.id].case = {
+            userConnections[msg.message.chat.id].case = {
                 caseId: msg.data.replace("AddBComm", ""),
             };
             await bot.sendMessage(msg.message.chat.id, "Введіть повідомлення✍️", {
@@ -286,7 +290,7 @@ class PrivateMessageHandler extends MessageHandler {
                 let inline_keyboard = [];
                 let contact = await getContactById(messages[i].CreatedById);
                 if (i === counter - 1 && counter >= 5) {
-                    inline_keyboard.push([{ text: "Показати ще", callback_data: "ShowMoreMsg"}]);
+                    inline_keyboard.push([{ text: "Показати ще", callback_data: "ShowMoreMsg" }]);
                     userConnections[msg.message.chat.id].counter = counter;
                     userConnections[msg.message.chat.id].messages = messages;
                 }
@@ -358,7 +362,8 @@ class PrivateMessageHandler extends MessageHandler {
                     userConnections[msg.message.chat.id].lastDateIndex = i + 1;
                     userConnections[msg.message.chat.id].lastDateCounter += 5;
                 }
-                await bot.sendMessage(msg.message.chat.id, "📁 Кейс - " + cases[i].Number + `\n\nНазва: ${cases[i].Subject}\n\nПроблема: ${cases[i].Symptoms}`, {
+                let status = await getEntityById("CaseStatus", cases[i].StatusId);
+                await bot.sendMessage(msg.message.chat.id, "📁 Кейс - " + cases[i].Number + `\n\nНазва: ${cases[i].Subject}\n\nПроблема: ${cases[i].Symptoms}\n\nСтатус: ${status.Name}`, {
                     reply_markup: JSON.stringify({
                         inline_keyboard: inline_keyboard
                     })
@@ -396,7 +401,8 @@ class PrivateMessageHandler extends MessageHandler {
             if (!this.caseStatusesIgnoreList.includes(example.StatusId)) {
                 inline_keyboard.push([{ text: "Закрити кейс", callback_data: "CloseCase" + msg.data }]);
             }
-            await bot.sendMessage(msg.message.chat.id, "📁 Кейс - " + example.Number + `\n\nНазва: ${example.Subject}\n\nПроблема: ${example.Symptoms}`, {
+            let status = await getEntityById("CaseStatus", example.StatusId);
+            await bot.sendMessage(msg.message.chat.id, "📁 Кейс - " + example.Number + `\n\nНазва: ${example.Subject}\n\nПроблема: ${example.Symptoms}\n\nСтатус: ${status.Name}`, {
                 reply_markup: JSON.stringify({
                     inline_keyboard: inline_keyboard
                 })
@@ -404,9 +410,9 @@ class PrivateMessageHandler extends MessageHandler {
         }
     }
     async handleDocument(bot, msg, userConnections) {
-        if (!userConnections[msg.chat.id] || !userConnections[msg.chat.id].status) {
+        if (!userConnections[msg.chat.id]) {
             return;
-        } else if (userConnections[msg.chat.id].status == 3) {
+        } else if (userConnections[msg.chat.id].status === 3) {
             let file = {};
             file.file_url = await bot.getFileLink(msg.document.file_id);
             file.file_name = msg.document.file_name;
@@ -425,6 +431,33 @@ class PrivateMessageHandler extends MessageHandler {
                 userConnections[msg.chat.id].status = 4;
             }
 
+        } else if (userConnections[msg.chat.id].status === 6) {
+            let file = {};
+            file.file_url = await bot.getFileLink(msg.document.file_id);
+            file.file_name = msg.document.file_name;
+            if (!userConnections[msg.chat.id].commentFiles) {
+                userConnections[msg.chat.id].commentFiles = [];
+            }
+            userConnections[msg.chat.id].commentFiles.push(file);
+            let contactId = await getContactIdByTelegramId(msg.chat.id);
+            if (userConnections[msg.chat.id].messageDocFlag === undefined) {
+                userConnections[msg.chat.id].messageDocFlag = true;
+            }
+            if (userConnections[msg.chat.id].messageDocFlag) {
+                userConnections[msg.chat.id].messageDocFlag = false;
+                setTimeout(async function () {
+                    let caseFile = {
+                        caseId: userConnections[msg.chat.id].case.caseId,
+                        files: userConnections[msg.chat.id].commentFiles,
+                        createdById: contactId
+                    }
+                    await createCaseFile(caseFile);
+                    userConnections[msg.chat.id].commentFiles = undefined;
+                }, 3000);
+                setTimeout(function () {
+                    userConnections[msg.chat.id].messageDocFlag = undefined;
+                }, 5000);
+            }
         }
     }
     async handlePhoto(bot, msg, userConnections) {
@@ -448,6 +481,33 @@ class PrivateMessageHandler extends MessageHandler {
                     bot.emit('text', simulatedMessage);
                 }, 3000);
                 userConnections[msg.chat.id].status = 4;
+            }
+        } else if (userConnections[msg.chat.id].status === 6) {
+            let file = {};
+            file.file_url = await bot.getFileLink(msg.photo[0].file_id);
+            file.file_name = path.basename(file.file_url);
+            if (!userConnections[msg.chat.id].commentFiles) {
+                userConnections[msg.chat.id].commentFiles = [];
+            }
+            userConnections[msg.chat.id].commentFiles.push(file);
+            let contactId = await getContactIdByTelegramId(msg.chat.id);
+            if (userConnections[msg.chat.id].messageDocFlag === undefined) {
+                userConnections[msg.chat.id].messageDocFlag = true;
+            }
+            if (userConnections[msg.chat.id].messageDocFlag) {
+                userConnections[msg.chat.id].messageDocFlag = false;
+                setTimeout(async function () {
+                    let caseFile = {
+                        caseId: userConnections[msg.chat.id].case.caseId,
+                        files: userConnections[msg.chat.id].commentFiles,
+                        createdById: contactId
+                    }
+                    await createCaseFile(caseFile);
+                    userConnections[msg.chat.id].commentFiles = undefined;
+                }, 3000);
+                setTimeout(function () {
+                    userConnections[msg.chat.id].messageDocFlag = undefined;
+                }, 5000);
             }
         }
 
