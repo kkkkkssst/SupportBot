@@ -1,6 +1,6 @@
 const path = require('path');
 const MessageHandler = require('./messageHandler');
-const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser, getEntityById,createActiveUser, createCaseFile, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
+const { getShadowAuthData, getUserByPhone, setContactData, createCase, getActiveUser, getEntityById, createActiveUser, createCaseFile, setSatisfactionLevel, getUserCases, closeCase, setFeedback, getContactCases, getCaseByNumber, getCaseStates, getCase, createComment, getContacts, getContactById, getMessagesByCaseId, getContactIdByTelegramId, getSatisfactionLeveId } = require('../apiServices');
 class PrivateMessageHandler extends MessageHandler {
     async handleText(bot, msg, userConnections) {
         if (msg.text === "/start" || msg.text === "/start@CRM_Genesis_Support_bot") {
@@ -108,6 +108,16 @@ class PrivateMessageHandler extends MessageHandler {
                     ]
                 })
             });
+            userConnections[msg.chat.id].status = 31;
+        } else if (userConnections[msg.chat.id].status === 31) {
+            userConnections[msg.chat.id].appeal.description += `\n${msg.text}`;
+            userConnections[msg.chat.id].status = 4;
+            bot.emit('text', {
+                chat: {
+                    id: msg.chat.id,
+                },
+                text: 'Added files links',
+            });
         } else if (userConnections[msg.chat.id].status === 4) {
             let appealNum = await createCase(userConnections[msg.chat.id]);
             await bot.sendMessage(msg.chat.id, `Звернення успішно оформлено під номером ${appealNum}!✅ `, {
@@ -205,9 +215,9 @@ class PrivateMessageHandler extends MessageHandler {
         if (!userConnections[msg.message.chat.id] /*|| !userConnections[msg.message.chat.id].status*/) {
             return;
         }
-        if (userConnections[msg.message.chat.id].status == 3 && msg.data == "AcceptAddingDocument") {
+        if (userConnections[msg.message.chat.id].status === 31 && msg.data === "AcceptAddingDocument") {
             await bot.sendMessage(msg.message.chat.id, `Надішліть документ 📃`);
-        } else if (userConnections[msg.message.chat.id].status == 3 && msg.data == "DeclineAddingDocument") {
+        } else if (userConnections[msg.message.chat.id].status === 31 && msg.data === "DeclineAddingDocument") {
             let appealNum = await createCase(userConnections[msg.message.chat.id]);
             await bot.sendMessage(msg.message.chat.id, `Звернення успішно оформлено під номером ${appealNum}!✅ `, {
                 reply_markup: {
@@ -412,7 +422,7 @@ class PrivateMessageHandler extends MessageHandler {
     async handleDocument(bot, msg, userConnections) {
         if (!userConnections[msg.chat.id]) {
             return;
-        } else if (userConnections[msg.chat.id].status === 3) {
+        } else if (userConnections[msg.chat.id].status === 31) {
             let file = {};
             file.file_url = await bot.getFileLink(msg.document.file_id);
             file.file_name = msg.document.file_name;
